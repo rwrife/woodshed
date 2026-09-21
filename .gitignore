@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.xcresult/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved.lock
+
+# Test / coverage artifacts
+*.gcda
+*.gcno
+coverage/
+Coverage/
+
+# Local signing material (never commit)
+*.p8
+*.p12
+*.mobileprovision
+*.provisionprofile
+asc_private/
+
+# Editors
+.vscode/
+.idea/
