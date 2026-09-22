@@ -86,26 +86,30 @@ Woodshed is designed as a **future iPhone Duo citizen** while being built today 
 
 ## Current status & milestones
 
-Documentation/backlog stage: **no Xcode project, application build, test suite, device behavior, archive, or TestFlight binary exists yet.** The backlog implements, in order:
+Native skeleton landed (issue #1): `Woodshed.xcodeproj` (app + UI-test targets,
+bundle id `com.infinityball.woodshed`, `TARGETED_DEVICE_FAMILY = 1` in every
+configuration), pure Swift 6 `Packages/WoodshedKit`, launch XCUITest smoke, and
+CI that measures the exact pinned toolchain, enforces iPhone-only pre-build grep
++ post-build `UIDeviceFamily == [1]`, runs a zero-network empty-allowlist gate,
+and runs the package tests on Linux. See `docs/bootstrap-evidence.md` for what
+is host-verified vs CI-authoritative. **No device, archive, or TestFlight
+evidence exists yet.** Remaining backlog:
 
-1. Project skeleton + CI (iPhone-only + zero-network gates)
-2. `WoodshedKit` pure domain (ledger, derivations, unknown-safe semantics)
-3. GRDB store + migrations + repositories
-4. Session-capture workflow UI
-5. Practice wall + piece detail UI (incl. `PracticeWorkspaceLayout` seam)
-6. Backup/export/restore + privacy controls
-7. Test + accessibility pass
-8. TestFlight/release packaging with real evidence gates
+1. `WoodshedKit` pure domain (ledger, derivations, unknown-safe semantics)
+2. GRDB store + migrations + repositories
+3. Session-capture workflow UI
+4. Practice wall + piece detail UI (incl. `PracticeWorkspaceLayout` seam)
+5. Backup/export/restore + privacy controls
+6. Test + accessibility pass
+7. TestFlight/release packaging with real evidence gates
 
 ## Development quickstart
-
-This repository currently holds documentation and backlog only. When the skeleton lands (issue #1):
 
 ```bash
 # Requires an Apple environment with the pinned toolchain (see toolchain.json).
 xcodebuild -project Woodshed.xcodeproj -scheme Woodshed \
-  -sdk iphoneos -destination 'generic/platform=iOS' build
-xcodebuild -project Woodshed.xcodeproj -scheme WoodshedKit \
+  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build
+xcodebuild -project Woodshed.xcodeproj -scheme Woodshed \
   -destination 'platform=iOS Simulator,name=iPhone 17' test
 ```
 

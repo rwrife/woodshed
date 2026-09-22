@@ -1,5 +1,5 @@
 {
-  "status": "planned-enforced-by-native-ci",
+  "status": "enforced-by-native-ci",
   "xcode_version": "26.0.1",
   "xcode_build": "17A400",
   "iphoneos_sdk": "26.0",
