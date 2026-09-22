@@ -13,6 +13,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  linux-package:
+    name: WoodshedKit (Linux swift test)
+    runs-on: ubuntu-latest
+    container:
+      image: swift:6.2-noble
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift version
+        run: swift --version
+      - name: Run package tests
+        run: swift test --package-path Packages/WoodshedKit
+      - name: Zero-network gate
+        run: bash scripts/check_zero_network.sh
+      - name: Gitignore keeps signing material out
+        run: |
+          set -e
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          for f in fake.p8 fake.p12 fake.mobileprovision fake.cer; do
+            touch "$f"
+            git check-ignore -q "$f" || { echo "FAIL: $f is not gitignored"; exit 1; }
+            rm "$f"
+          done
+          echo "Signing-material gitignore check: PASS"
+
   ios:
     runs-on: macos-15
     timeout-minutes: 45
