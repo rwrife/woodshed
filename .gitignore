@@ -1,6 +1,10 @@
 # macOS
 .DS_Store
 
+# Python helper-script bytecode (Scripts/)
+__pycache__/
+*.pyc
+
 # Xcode
 xcuserdata/
 *.xcuserstate
@@ -24,6 +28,7 @@ Coverage/
 *.p12
 *.mobileprovision
 *.provisionprofile
+*.cer
 asc_private/
 
 # Editors

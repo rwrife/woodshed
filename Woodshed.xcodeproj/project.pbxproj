@@ -1,0 +1,268 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000101 /* WoodshedApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000201 /* WoodshedApp.swift */; };
+		A10000000000000000000102 /* BootstrapHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000202 /* BootstrapHomeView.swift */; };
+		A10000000000000000000103 /* WoodshedLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000203 /* WoodshedLaunchTests.swift */; };
+		A10000000000000000000104 /* WoodshedKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000801 /* WoodshedKit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A10000000000000000000301 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A10000000000000000000001;
+			remoteInfo = Woodshed;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		A10000000000000000000201 /* WoodshedApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WoodshedApp.swift; sourceTree = "<group>"; };
+		A10000000000000000000202 /* BootstrapHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BootstrapHomeView.swift; sourceTree = "<group>"; };
+		A10000000000000000000203 /* WoodshedLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WoodshedLaunchTests.swift; sourceTree = "<group>"; };
+		A10000000000000000000204 /* Woodshed.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Woodshed.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000205 /* WoodshedUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WoodshedUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A10000000000000000000401 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (A10000000000000000000104 /* WoodshedKit in Frameworks */,);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000402 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A10000000000000000000500 = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000501 /* App */,
+				A10000000000000000000502 /* UITests */,
+				A10000000000000000000503 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A10000000000000000000501 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000201 /* WoodshedApp.swift */,
+				A10000000000000000000202 /* BootstrapHomeView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000502 /* UITests */ = {
+			isa = PBXGroup;
+			children = (A10000000000000000000203 /* WoodshedLaunchTests.swift */,);
+			path = UITests;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000503 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000204 /* Woodshed.app */,
+				A10000000000000000000205 /* WoodshedUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A10000000000000000000001 /* Woodshed */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000601 /* Build configuration list for PBXNativeTarget "Woodshed" */;
+			buildPhases = (
+				A10000000000000000000701 /* Sources */,
+				A10000000000000000000401 /* Frameworks */,
+				A10000000000000000000703 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = Woodshed;
+			packageProductDependencies = (A10000000000000000000801 /* WoodshedKit */,);
+			productName = Woodshed;
+			productReference = A10000000000000000000204 /* Woodshed.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A10000000000000000000002 /* WoodshedUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000602 /* Build configuration list for PBXNativeTarget "WoodshedUITests" */;
+			buildPhases = (
+				A10000000000000000000702 /* Sources */,
+				A10000000000000000000402 /* Frameworks */,
+				A10000000000000000000704 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = (A10000000000000000000302 /* PBXTargetDependency */,);
+			name = WoodshedUITests;
+			productName = WoodshedUITests;
+			productReference = A10000000000000000000205 /* WoodshedUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A10000000000000000000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					A10000000000000000000001 = {CreatedOnToolsVersion = 26.0;};
+					A10000000000000000000002 = {CreatedOnToolsVersion = 26.0; TestTargetID = A10000000000000000000001;};
+				};
+			};
+			buildConfigurationList = A10000000000000000000600 /* Build configuration list for PBXProject "Woodshed" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base,);
+			mainGroup = A10000000000000000000500;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (A10000000000000000000800 /* XCLocalSwiftPackageReference "Packages/WoodshedKit" */,);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A10000000000000000000503 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A10000000000000000000001 /* Woodshed */,
+				A10000000000000000000002 /* WoodshedUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A10000000000000000000703 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+		A10000000000000000000704 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A10000000000000000000701 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000101 /* WoodshedApp.swift in Sources */,
+				A10000000000000000000102 /* BootstrapHomeView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000702 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (A10000000000000000000103 /* WoodshedLaunchTests.swift in Sources */,);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A10000000000000000000302 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A10000000000000000000001 /* Woodshed */; targetProxy = A10000000000000000000301 /* PBXContainerItemProxy */;};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A10000000000000000000901 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; ENABLE_USER_SCRIPT_SANDBOXING = YES; IPHONEOS_DEPLOYMENT_TARGET = 26.0; ONLY_ACTIVE_ARCH = YES; SDKROOT = iphoneos; SWIFT_VERSION = 6.0;}; name = Debug;};
+		A10000000000000000000902 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; ENABLE_USER_SCRIPT_SANDBOXING = YES; IPHONEOS_DEPLOYMENT_TARGET = 26.0; SDKROOT = iphoneos; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_VERSION = 6.0;}; name = Release;};
+		A10000000000000000000903 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Woodshed";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.infinityball.woodshed;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A10000000000000000000904 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Woodshed";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.infinityball.woodshed;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		A10000000000000000000905 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.infinityball.woodshed.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Woodshed;
+			};
+			name = Debug;
+		};
+		A10000000000000000000906 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.infinityball.woodshed.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = Woodshed;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A10000000000000000000600 /* Build configuration list for PBXProject "Woodshed" */ = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000901 /* Debug */, A10000000000000000000902 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+		A10000000000000000000601 /* Build configuration list for PBXNativeTarget "Woodshed" */ = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000903 /* Debug */, A10000000000000000000904 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+		A10000000000000000000602 /* Build configuration list for PBXNativeTarget "WoodshedUITests" */ = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000905 /* Debug */, A10000000000000000000906 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A10000000000000000000800 /* XCLocalSwiftPackageReference "Packages/WoodshedKit" */ = {isa = XCLocalSwiftPackageReference; relativePath = Packages/WoodshedKit;};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A10000000000000000000801 /* WoodshedKit */ = {isa = XCSwiftPackageProductDependency; productName = WoodshedKit;};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A10000000000000000000000 /* Project object */;
+}
