@@ -110,6 +110,11 @@ xcrun swift test \
   --package-path Packages/WoodshedKit \
   2>&1 | tee "$artifact_dir/domain-tests.log"
 
+phase="store_tests"
+xcrun swift test \
+  --package-path Packages/WoodshedStore \
+  2>&1 | tee "$artifact_dir/store-tests.log"
+
 phase="app_build"
 xcodebuild build \
   -project Woodshed.xcodeproj \
