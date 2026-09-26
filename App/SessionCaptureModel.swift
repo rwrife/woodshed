@@ -17,10 +17,10 @@ import WoodshedStore
 ///   through the repository layer.
 @MainActor
 public final class SessionCaptureViewModel: ObservableObject {
-    public static let freePracticeTitle = "Free Practice"
-    public static let runningDraftDefaultsKey = "woodshed.capture.runningDraft"
-    public static let recentPiecesDefaultsKey = "woodshed.capture.recentPieces"
-    public static let favoritePiecesDefaultsKey = "woodshed.capture.favoritePieces"
+    public nonisolated static let freePracticeTitle = "Free Practice"
+    public nonisolated static let runningDraftDefaultsKey = "woodshed.capture.runningDraft"
+    public nonisolated static let recentPiecesDefaultsKey = "woodshed.capture.recentPieces"
+    public nonisolated static let favoritePiecesDefaultsKey = "woodshed.capture.favoritePieces"
 
     public struct SplitDraft: Identifiable, Codable, Equatable, Sendable {
         public let id: UUID
