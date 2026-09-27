@@ -80,6 +80,28 @@ public enum Derivations {
         return counted ? total : nil
     }
 
+    /// Minutes practiced on a single piece in the calendar week (per
+    /// `calendar`'s week boundaries) containing `reference`.
+    ///
+    /// Returns `nil` (unknown) when the piece has no practice in the
+    /// reference week — never 0. Sessions containing piece-specific splits
+    /// attribute only those splits to each piece; a splitless session belongs
+    /// entirely to its primary piece. A session is bucketed by its start
+    /// instant, matching the ledger-wide weekly calculation.
+    public static func weeklyMinutes(in ledger: Ledger, pieceID: UUID, reference: Date, calendar: Calendar) -> Int? {
+        guard let interval = calendar.dateInterval(of: .weekOfYear, for: reference) else { return nil }
+        let pieceTitle = ledger.currentPieces().first(where: { $0.id == pieceID })?.title
+        let splits = ledger.currentSplits()
+        var total: Int = 0
+        var counted = false
+        for session in ledger.currentSessions() where interval.contains(session.startedAt) {
+            guard let minutes = attributedSessionMinutes(session, pieceID: pieceID, pieceTitle: pieceTitle, splits: splits) else { continue }
+            total = checkedAdd(total, minutes)
+            counted = true
+        }
+        return counted ? total : nil
+    }
+
     /// Whole minutes of a session (truncated). The elapsed interval is
     /// converted to whole integer seconds first, so minute totals are
     /// exact Int division — no float accumulation (issue #2 contract).
@@ -99,15 +121,23 @@ public enum Derivations {
         return Int(elapsed) / 60
     }
 
-    /// Whole calendar days between the piece's most recent session and
+    /// Whole calendar days between the piece's most recent practice and
     /// `reference`, per `calendar` (calendar-day difference, so a partial
     /// "day" crossing midnight still counts as one day).
     ///
-    /// Returns `nil` (unknown) when the piece has no sessions. Returns 0
+    /// Honors split-based attribution: a piece practiced only inside a
+    /// switched session's split counts as practiced on that session's day.
+    /// Returns `nil` (unknown) when the piece has no practice. Returns 0
     /// when the piece was practiced on the reference day.
     public static func daysSinceLast(in ledger: Ledger, pieceID: UUID, reference: Date, calendar: Calendar) -> Int? {
-        let sessions = ledger.currentSessions().filter { $0.pieceID == pieceID }
-        guard let last = sessions.map(\.startedAt).max() else { return nil }
+        let pieceTitle = ledger.currentPieces().first(where: { $0.id == pieceID })?.title
+        let splits = ledger.currentSplits()
+        var last: Date?
+        for session in ledger.currentSessions()
+        where attributedSessionMinutes(session, pieceID: pieceID, pieceTitle: pieceTitle, splits: splits) != nil {
+            if last == nil || session.startedAt > last! { last = session.startedAt }
+        }
+        guard let last else { return nil }
         let startOfDay: (Date) -> Date? = { date in calendar.startOfDay(for: date) }
         guard let lastDay = startOfDay(last), let referenceDay = startOfDay(reference) else { return nil }
         let components = calendar.dateComponents([.day], from: lastDay, to: referenceDay)
@@ -116,15 +146,44 @@ public enum Derivations {
 
     /// Total whole minutes practiced on a piece across all its sessions.
     ///
-    /// Returns `nil` (unknown) when the piece has no sessions — never 0.
+    /// Returns `nil` (unknown) when the piece has no practice — never 0.
+    /// Honors split-based attribution for switched sessions.
     public static func pieceMinutes(in ledger: Ledger, pieceID: UUID) -> Int? {
-        let sessions = ledger.currentSessions().filter { $0.pieceID == pieceID }
-        guard !sessions.isEmpty else { return nil }
+        let pieceTitle = ledger.currentPieces().first(where: { $0.id == pieceID })?.title
+        let splits = ledger.currentSplits()
         var total: Int = 0
-        for session in sessions {
-            total = checkedAdd(total, sessionMinutes(session))
+        var counted = false
+        for session in ledger.currentSessions() {
+            guard let minutes = attributedSessionMinutes(session, pieceID: pieceID, pieceTitle: pieceTitle, splits: splits) else { continue }
+            total = checkedAdd(total, minutes)
+            counted = true
         }
-        return total
+        return counted ? total : nil
+    }
+
+    /// Attributed whole minutes for `pieceID` within `session`. When splits
+    /// are present for the session, splits matching `pieceTitle` are summed
+    /// (SessionSplit carries label rather than pieceID). When no splits
+    /// exist, the session is attributed to its primary `pieceID`.
+    static func attributedSessionMinutes(
+        _ session: Session,
+        pieceID: UUID,
+        pieceTitle: String?,
+        splits: [SessionSplit]
+    ) -> Int? {
+        let matchingSplits = splits.filter { $0.sessionID == session.id }
+        if !matchingSplits.isEmpty {
+            guard let pieceTitle else { return nil }
+            let pieceSplits = matchingSplits.filter { $0.label == pieceTitle }
+            guard !pieceSplits.isEmpty else { return nil }
+            var total = 0
+            for split in pieceSplits {
+                total = checkedAdd(total, splitMinutes(split))
+            }
+            return total
+        }
+        guard session.pieceID == pieceID else { return nil }
+        return sessionMinutes(session)
     }
 
     /// Highest BPM ever logged for a piece. `nil` (unknown) when no
@@ -147,6 +206,17 @@ public enum Derivations {
               let last = lastTempo(in: ledger, pieceID: pieceID)
         else { return nil }
         return checkedSubtract(last, target)
+    }
+
+    /// Best logged BPM minus the piece target. `nil` (unknown) when the
+    /// target or tempo history is absent. This is the wall's explicit
+    /// best-vs-target contract; `tempoDeltaVsTarget` remains latest-vs-target.
+    public static func bestTempoDeltaVsTarget(in ledger: Ledger, pieceID: UUID) -> Int? {
+        guard let piece = ledger.currentPieces().first(where: { $0.id == pieceID }),
+              let target = piece.targetBPM,
+              let best = bestTempo(in: ledger, pieceID: pieceID)
+        else { return nil }
+        return checkedSubtract(best, target)
     }
 
     // MARK: - Exact integer helpers

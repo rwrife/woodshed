@@ -2,161 +2,33 @@ import SwiftUI
 import WoodshedKit
 import WoodshedStore
 
-/// Root view for the session-capture workflow (issue #4). Switches between
-/// the Quick Start picker, the running session controls, and the stop
-/// confirmation flow based on `SessionCaptureViewModel.state`.
+/// Root view. In the idle state it hands off to `PracticeWorkspaceView`,
+/// which owns the practice wall + piece detail and, through
+/// `PracticeWorkspaceLayout`, the only layout/size-class branch in the app.
+/// The running and confirmation flows keep their own navigation stack.
 struct BootstrapHomeView: View {
     @ObservedObject var model: SessionCaptureViewModel
 
     var body: some View {
-        NavigationStack {
-            Group {
-                switch model.state {
-                case .idle:
-                    StartSessionPickerView(model: model)
-                case .running, .paused:
+        Group {
+            switch model.state {
+            case .idle:
+                PracticeWorkspaceView(captureModel: model)
+            case .running, .paused:
+                NavigationStack {
                     RunningSessionView(model: model)
-                case .confirming:
+                        .navigationTitle(model.state == .idle ? "Woodshed" : "")
+                        .navigationBarTitleDisplayMode(.inline)
+                }
+            case .confirming:
+                NavigationStack {
                     StopConfirmationView(model: model)
+                        .navigationTitle(model.state == .idle ? "Woodshed" : "")
+                        .navigationBarTitleDisplayMode(.inline)
                 }
             }
-            .navigationTitle(model.state == .idle ? "Woodshed" : "")
-            .navigationBarTitleDisplayMode(.inline)
         }
         .accessibilityIdentifier("bootstrap.home")
-    }
-}
-
-/// One tap from launch: Quick Start into Free Practice. A second tap picks
-/// a specific piece (favorites/recents first). Reachable in <= 2 taps.
-struct StartSessionPickerView: View {
-    @ObservedObject var model: SessionCaptureViewModel
-    @State private var showingAddPiece = false
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                header
-
-                Button {
-                    model.startSession(piece: model.freePracticePiece())
-                } label: {
-                    Label("Quick Start: Free Practice", systemImage: "play.circle.fill")
-                        .font(.title2.bold())
-                        .frame(maxWidth: .infinity, minHeight: 64)
-                }
-                .buttonStyle(.borderedProminent)
-                .accessibilityIdentifier("capture.quickStart.free")
-                .accessibilityHint("Starts a practice session immediately without picking a piece.")
-
-                let groups = model.sortedPickerPieces
-                pieceSection(title: "Favorites", pieces: groups.favorites)
-                pieceSection(title: "Recent", pieces: groups.recents)
-                pieceSection(title: "All pieces", pieces: groups.others)
-
-                if model.availablePieces.filter({ $0.id != WoodshedStoreContainer.freePieceID }).isEmpty {
-                    Text("Add a piece to see it here as a one-tap start.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-
-                if let status = model.statusMessage {
-                    Text(status)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .accessibilityIdentifier("capture.status")
-                        .fixedSize(horizontal: false, vertical: true)
-                        .multilineTextAlignment(.center)
-                }
-
-                LedgerSummaryView(model: model)
-            }
-            .padding(20)
-        }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingAddPiece = true
-                } label: {
-                    Image(systemName: "plus.circle.fill")
-                        .accessibilityLabel("Add piece")
-                }
-                .accessibilityIdentifier("capture.addPiece.toolbar")
-            }
-        }
-        .sheet(isPresented: $showingAddPiece) {
-            AddPieceSheet(model: model, isPresented: $showingAddPiece)
-        }
-    }
-
-    private var header: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "music.note.list")
-                .font(.system(size: 44))
-                .foregroundStyle(.tint)
-                .accessibilityHidden(true)
-            Text("Woodshed")
-                .font(.largeTitle.bold())
-            Text("Session capture and the practice wall arrive in the next milestones.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    @ViewBuilder
-    private func pieceSection(title: String, pieces: [Piece]) -> some View {
-        if !pieces.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(title)
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                ForEach(pieces, id: \.id) { piece in
-                    PieceStartRow(piece: piece, model: model)
-                }
-            }
-        }
-    }
-}
-
-/// A single one-handed, big-target row that starts a session with `piece`
-/// on a single tap, plus a favorite toggle.
-struct PieceStartRow: View {
-    let piece: Piece
-    @ObservedObject var model: SessionCaptureViewModel
-
-    var body: some View {
-        HStack {
-            Button {
-                model.startSession(piece: piece)
-            } label: {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(piece.title)
-                        .font(.body.weight(.semibold))
-                        .multilineTextAlignment(.leading)
-                    if let target = piece.targetBPM {
-                        Text("Target \(target) BPM")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
-            }
-            .buttonStyle(.bordered)
-            .accessibilityIdentifier(Identifiers.startPiece(piece))
-            .accessibilityLabel("Start session: \(piece.title)")
-
-            Button {
-                model.toggleFavorite(pieceID: piece.id)
-            } label: {
-                Image(systemName: model.favoritePieceIDs.contains(piece.id) ? "star.fill" : "star")
-                    .frame(width: 44, height: 44)
-            }
-            .accessibilityIdentifier(Identifiers.favoriteToggle(piece))
-            .accessibilityLabel(model.favoritePieceIDs.contains(piece.id) ? "Remove favorite" : "Add favorite")
-        }
     }
 }
 
