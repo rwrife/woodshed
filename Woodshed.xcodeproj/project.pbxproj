@@ -10,6 +10,11 @@
 		A10000000000000000000102 /* BootstrapHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000202 /* BootstrapHomeView.swift */; };
 		A10000000000000000000103 /* WoodshedLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000203 /* WoodshedLaunchTests.swift */; };
 		A10000000000000000000104 /* WoodshedKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000801 /* WoodshedKit */; };
+		A10000000000000000000105 /* WoodshedStore in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000802 /* WoodshedStore */; };
+		A10000000000000000000106 /* SessionCaptureModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000206 /* SessionCaptureModel.swift */; };
+		A10000000000000000000107 /* RunningSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000207 /* RunningSessionView.swift */; };
+		A10000000000000000000108 /* StopConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000208 /* StopConfirmationView.swift */; };
+		A10000000000000000000109 /* SessionCaptureUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000209 /* SessionCaptureUITests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -28,13 +33,20 @@
 		A10000000000000000000203 /* WoodshedLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WoodshedLaunchTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000204 /* Woodshed.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Woodshed.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000205 /* WoodshedUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WoodshedUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000206 /* SessionCaptureModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCaptureModel.swift; sourceTree = "<group>"; };
+		A10000000000000000000207 /* RunningSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningSessionView.swift; sourceTree = "<group>"; };
+		A10000000000000000000208 /* StopConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopConfirmationView.swift; sourceTree = "<group>"; };
+		A10000000000000000000209 /* SessionCaptureUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCaptureUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A10000000000000000000401 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
-			files = (A10000000000000000000104 /* WoodshedKit in Frameworks */,);
+			files = (
+				A10000000000000000000104 /* WoodshedKit in Frameworks */,
+				A10000000000000000000105 /* WoodshedStore in Frameworks */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A10000000000000000000402 /* Frameworks */ = {
@@ -60,13 +72,19 @@
 			children = (
 				A10000000000000000000201 /* WoodshedApp.swift */,
 				A10000000000000000000202 /* BootstrapHomeView.swift */,
+				A10000000000000000000206 /* SessionCaptureModel.swift */,
+				A10000000000000000000207 /* RunningSessionView.swift */,
+				A10000000000000000000208 /* StopConfirmationView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
 		};
 		A10000000000000000000502 /* UITests */ = {
 			isa = PBXGroup;
-			children = (A10000000000000000000203 /* WoodshedLaunchTests.swift */,);
+			children = (
+				A10000000000000000000203 /* WoodshedLaunchTests.swift */,
+				A10000000000000000000209 /* SessionCaptureUITests.swift */,
+			);
 			path = UITests;
 			sourceTree = "<group>";
 		};
@@ -93,7 +111,10 @@
 			buildRules = ();
 			dependencies = ();
 			name = Woodshed;
-			packageProductDependencies = (A10000000000000000000801 /* WoodshedKit */,);
+			packageProductDependencies = (
+				A10000000000000000000801 /* WoodshedKit */,
+				A10000000000000000000802 /* WoodshedStore */,
+			);
 			productName = Woodshed;
 			productReference = A10000000000000000000204 /* Woodshed.app */;
 			productType = "com.apple.product-type.application";
@@ -134,7 +155,10 @@
 			knownRegions = (en, Base,);
 			mainGroup = A10000000000000000000500;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (A10000000000000000000800 /* XCLocalSwiftPackageReference "Packages/WoodshedKit" */,);
+			packageReferences = (
+				A10000000000000000000800 /* XCLocalSwiftPackageReference "Packages/WoodshedKit" */,
+				A10000000000000000000803 /* XCLocalSwiftPackageReference "Packages/WoodshedStore" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A10000000000000000000503 /* Products */;
 			projectDirPath = "";
@@ -158,13 +182,19 @@
 			files = (
 				A10000000000000000000101 /* WoodshedApp.swift in Sources */,
 				A10000000000000000000102 /* BootstrapHomeView.swift in Sources */,
+				A10000000000000000000106 /* SessionCaptureModel.swift in Sources */,
+				A10000000000000000000107 /* RunningSessionView.swift in Sources */,
+				A10000000000000000000108 /* StopConfirmationView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A10000000000000000000702 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = (A10000000000000000000103 /* WoodshedLaunchTests.swift in Sources */,);
+			files = (
+				A10000000000000000000103 /* WoodshedLaunchTests.swift in Sources */,
+				A10000000000000000000109 /* SessionCaptureUITests.swift in Sources */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
@@ -258,10 +288,12 @@
 
 /* Begin XCLocalSwiftPackageReference section */
 		A10000000000000000000800 /* XCLocalSwiftPackageReference "Packages/WoodshedKit" */ = {isa = XCLocalSwiftPackageReference; relativePath = Packages/WoodshedKit;};
+		A10000000000000000000803 /* XCLocalSwiftPackageReference "Packages/WoodshedStore" */ = {isa = XCLocalSwiftPackageReference; relativePath = Packages/WoodshedStore;};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		A10000000000000000000801 /* WoodshedKit */ = {isa = XCSwiftPackageProductDependency; productName = WoodshedKit;};
+		A10000000000000000000802 /* WoodshedStore */ = {isa = XCSwiftPackageProductDependency; productName = WoodshedStore;};
 /* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A10000000000000000000000 /* Project object */;
