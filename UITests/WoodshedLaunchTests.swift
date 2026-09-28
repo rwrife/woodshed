@@ -71,9 +71,7 @@ final class WoodshedLaunchTests: XCTestCase {
 
         XCTAssertTrue(app.descendants(matching: .any)["practice.wall"].firstMatch.waitForExistence(timeout: 5))
         let retiredCard = app.descendants(matching: .any)["wall.card.etude-op-10-no-3"].firstMatch
-        XCTAssertTrue(
-            retiredCard.wait(for: .nonExistent, timeout: 10),
-            "Retired piece must be hidden from the practice wall"
-        )
+        _ = retiredCard.waitForExistence(timeout: 10)
+        XCTAssertFalse(retiredCard.exists, "Retired piece must be hidden from the practice wall")
     }
 }
