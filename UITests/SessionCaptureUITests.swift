@@ -53,7 +53,7 @@ final class SessionCaptureUITests: XCTestCase {
         let predicate = NSPredicate(format: "label CONTAINS[c] %@", labelFragment)
         let match = app.staticTexts.matching(predicate).firstMatch
         if !match.exists {
-            let wall = app.scrollViews["practice.wall"]
+            let wall = app.descendants(matching: .any)["practice.wall"].firstMatch
             if wall.waitForExistence(timeout: 3) {
                 wall.swipeUp()
             }
