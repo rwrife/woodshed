@@ -21,6 +21,8 @@ public struct LedgerEvent: Codable, Equatable, Hashable, Sendable {
     /// When the ledger accepted the event. Ledger ordering is defined by
     /// this field, not by wall-clock arrival at read time.
     public let committedAt: Date
+    /// The exact session event a split belongs to. Older backups omit it.
+    public let sessionCommittedAt: Date?
     /// The recorded snapshot (a `Piece`, `Session`, …).
     public let payload: LedgerPayload
 
@@ -30,6 +32,7 @@ public struct LedgerEvent: Codable, Equatable, Hashable, Sendable {
         case kind
         case entityID = "entity_id"
         case committedAt = "committed_at"
+        case sessionCommittedAt = "session_committed_at"
         case payload
     }
 
@@ -37,10 +40,11 @@ public struct LedgerEvent: Codable, Equatable, Hashable, Sendable {
     /// from the payload, so a mismatched event is unconstructable in
     /// normal use. Decoding JSON is the sole untrusted path, guarded by
     /// `Ledger.append`'s identity re-check.
-    public init(committedAt: Date, payload: LedgerPayload) {
+    public init(committedAt: Date, payload: LedgerPayload, sessionCommittedAt: Date? = nil) {
         self.kind = payload.eventKind
         self.entityID = payload.entityID
         self.committedAt = committedAt
+        self.sessionCommittedAt = sessionCommittedAt
         self.payload = payload
     }
 }
@@ -136,6 +140,8 @@ public enum LedgerPayload: Codable, Equatable, Hashable, Sendable {
 
 /// Errors raised by ledger appends that would violate ledger semantics.
 public enum LedgerError: Error, Equatable, Sendable {
+    /// A decoded event's declared kind does not match its payload.
+    case eventKindMismatch(eventKind: LedgerEvent.Kind, payloadKind: LedgerEvent.Kind)
     /// A tempo log was appended out of monotonic order for its piece:
     /// `loggedAt` precedes the previous tempo log for the same piece.
     case tempoLogOutOfOrder(pieceID: UUID, loggedAt: Date, previousLoggedAt: Date)
@@ -165,6 +171,9 @@ public struct Ledger: Equatable, Sendable {
     /// Append a new immutable event. Throws `LedgerError` when the
     /// append would break append-only ordering or tempo monotonicity.
     public mutating func append(_ event: LedgerEvent) throws {
+        guard event.kind == event.payload.eventKind else {
+            throw LedgerError.eventKindMismatch(eventKind: event.kind, payloadKind: event.payload.eventKind)
+        }
         let payloadID = event.payload.entityID
         guard event.entityID == payloadID else {
             throw LedgerError.entityIdentityMismatch(eventID: event.entityID, payloadID: payloadID)

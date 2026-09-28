@@ -81,7 +81,8 @@ Woodshed is designed as a **future iPhone Duo citizen** while being built today 
 
 - **Zero network.** No networking code ships in the MVP; a CI gate fails the build on new network imports. No accounts, no analytics, no ads, no crash reporting beyond Xcode defaults.
 - Data lives in a local SQLite (GRDB) store in the app container. Photos of sheet music, microphones, location, contacts, and HealthKit are **not used and not requested** — the app needs **no permission prompts at all**.
-- Backups are user-initiated JSON via the Files app; CSV exports are user-initiated and previewed. Nothing leaves the device unless the user exports it.
+- Backups and CSV exports are user-initiated through the Files save panel. Restore uses the Files picker, shows before/after counts for all six tables, and requires an explicit replacement confirmation. Nothing leaves the device unless the user exports it.
+- The CSV has one row per current session, ordered by start time and ID. Dates use UTC; splits and achieved tempos are listed for that session, and notes written on the same UTC calendar day for its piece are included. Fields follow RFC 4180 quoting and minutes have two decimal places.
 - Deleting the app deletes all data. Restore always previews before replacing.
 
 ## Current status & milestones
