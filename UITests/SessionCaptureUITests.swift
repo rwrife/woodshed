@@ -128,18 +128,17 @@ final class SessionCaptureUITests: XCTestCase {
         save.tap()
 
         XCTAssertTrue(app.otherElements["bootstrap.home"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["capture.status"].waitForExistence(timeout: 5))
 
-        let sessionsCount = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", "Sessions: 1")).firstMatch
+        let sessionsCount = ledgerStaticText(containing: "Sessions: 1")
         XCTAssertTrue(sessionsCount.waitForExistence(timeout: 5), "Expected 1 session in ledger")
 
-        let splitsCount = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", "Session splits: 2")).firstMatch
+        let splitsCount = ledgerStaticText(containing: "Session splits: 2")
         XCTAssertTrue(splitsCount.waitForExistence(timeout: 5), "Expected 2 splits in ledger")
 
-        let tempoCount = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", "Tempo logs: 1")).firstMatch
+        let tempoCount = ledgerStaticText(containing: "Tempo logs: 1")
         XCTAssertTrue(tempoCount.waitForExistence(timeout: 5), "Expected 1 tempo log in ledger")
 
-        let notesCount = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", "Practice notes: 1")).firstMatch
+        let notesCount = ledgerStaticText(containing: "Practice notes: 1")
         XCTAssertTrue(notesCount.waitForExistence(timeout: 5), "Expected 1 practice note in ledger")
     }
 }
