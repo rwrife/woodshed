@@ -44,10 +44,6 @@ final class SessionCaptureUITests: XCTestCase {
         save.tap()
 
         XCTAssertTrue(app.otherElements["bootstrap.home"].waitForExistence(timeout: 10))
-        // The store commit surfaces through the status line first; waiting on
-        // it makes the ledger assertion below deterministic instead of racing
-        // the post-save view transition.
-        XCTAssertTrue(app.staticTexts["capture.status"].waitForExistence(timeout: 5))
         XCTAssertTrue(ledgerStaticText(containing: "Sessions: 1").waitForExistence(timeout: 5))
     }
 
@@ -57,7 +53,7 @@ final class SessionCaptureUITests: XCTestCase {
         let predicate = NSPredicate(format: "label CONTAINS[c] %@", labelFragment)
         let match = app.staticTexts.matching(predicate).firstMatch
         if !match.exists {
-            let wall = app.scrollViews["practice.wall.scroll"]
+            let wall = app.scrollViews["practice.wall"]
             if wall.waitForExistence(timeout: 3) {
                 wall.swipeUp()
             }

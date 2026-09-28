@@ -381,7 +381,6 @@ struct PracticeWallView: View {
             }
             .padding(16)
         }
-        .accessibilityIdentifier("practice.wall.scroll")
         .navigationTitle("Practice Wall")
         .accessibilityIdentifier("practice.wall")
         .accessibilityRotor("Practice pieces") {

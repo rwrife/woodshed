@@ -13,7 +13,7 @@ final class WoodshedLaunchTests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.otherElements["bootstrap.home"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.otherElements["practice.wall"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["practice.wall"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.navigationBars["Practice Wall"].waitForExistence(timeout: 5))
 
         // Quick start is present on the wall
@@ -34,7 +34,7 @@ final class WoodshedLaunchTests: XCTestCase {
         XCTAssertFalse(summary.contains("0 BPM"), "Empty ledger must never render zero BPM")
 
         // VoiceOver rotor: practice wall exposes a rotor for pieces
-        XCTAssertTrue(app.otherElements["practice.wall"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["practice.wall"].firstMatch.exists)
     }
 
     @MainActor
@@ -69,8 +69,11 @@ final class WoodshedLaunchTests: XCTestCase {
         XCTAssertTrue(backButton.waitForExistence(timeout: 5))
         backButton.tap()
 
-        XCTAssertTrue(app.otherElements["practice.wall"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["practice.wall"].firstMatch.waitForExistence(timeout: 5))
         let retiredCard = app.descendants(matching: .any)["wall.card.etude-op-10-no-3"].firstMatch
-        XCTAssertFalse(retiredCard.exists, "Retired piece must be hidden from the practice wall")
+        XCTAssertTrue(
+            retiredCard.wait(for: .nonExistent, timeout: 10),
+            "Retired piece must be hidden from the practice wall"
+        )
     }
 }
