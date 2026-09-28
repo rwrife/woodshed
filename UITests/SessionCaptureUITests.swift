@@ -47,16 +47,14 @@ final class SessionCaptureUITests: XCTestCase {
         XCTAssertTrue(ledgerStaticText(containing: "Sessions: 1").waitForExistence(timeout: 5))
     }
 
-    /// Ledger summaries can sit below the fold on compact simulators; bring
-    /// the wall scroll view up if the label is not immediately visible.
+    /// Ledger summaries can sit below the fold on compact simulators. Scroll
+    /// the frontmost app surface: SwiftUI does not consistently expose the
+    /// enclosing ScrollView identifier after returning from the review flow.
     private func ledgerStaticText(containing labelFragment: String) -> XCUIElement {
         let predicate = NSPredicate(format: "label CONTAINS[c] %@", labelFragment)
         let match = app.staticTexts.matching(predicate).firstMatch
-        if !match.exists {
-            let wall = app.descendants(matching: .any)["practice.wall"].firstMatch
-            if wall.waitForExistence(timeout: 3) {
-                wall.swipeUp()
-            }
+        for _ in 0..<4 where !match.exists {
+            app.swipeUp()
         }
         return match
     }
