@@ -430,6 +430,61 @@ struct PieceMetricTests {
         try ledger.append(LedgerEvent(committedAt: Date(timeIntervalSince1970: 3), payload: .piece(Piece(id: noLogs, instrumentID: instrumentID, title: "Untemposed", targetBPM: 120))))
         #expect(Derivations.tempoDeltaVsTarget(in: ledger, pieceID: noLogs) == nil)
     }
+
+    @Test("bestTempoDeltaVsTarget compares highest logged BPM vs target; unknown on missing inputs")
+    func bestTempoDelta() throws {
+        var ledger = Ledger()
+        let instrumentID = UUID()
+        let pieceID = UUID()
+        try ledger.append(LedgerEvent(committedAt: Date(timeIntervalSince1970: 1), payload: .piece(Piece(id: pieceID, instrumentID: instrumentID, title: "Scales", targetBPM: 100))))
+        #expect(Derivations.bestTempoDeltaVsTarget(in: ledger, pieceID: pieceID) == nil)
+
+        let base = Date(timeIntervalSince1970: 1_000)
+        for (bpm, offset) in [(80, 0), (120, 10), (95, 20)] {
+            try ledger.append(LedgerEvent(committedAt: base.addingTimeInterval(Double(offset)), payload: .tempoLog(TempoLog(pieceID: pieceID, bpm: bpm, loggedAt: base.addingTimeInterval(Double(offset))))))
+        }
+        // best is 120, target 100 -> delta +20 (even though last tempo is 95)
+        #expect(Derivations.bestTempoDeltaVsTarget(in: ledger, pieceID: pieceID) == 20)
+    }
+
+    @Test("weeklyMinutes for a single piece filters to that piece only")
+    func pieceWeeklyMinutes() throws {
+        var ledger = Ledger()
+        let pieceA = UUID()
+        let pieceB = UUID()
+        let reference = inst(2026, 3, 11, 12, 0, calendar: Self.ny)
+        // pieceA has 30 mins, pieceB has 45 mins in the same week
+        try ledger.append(LedgerEvent(committedAt: Date(timeIntervalSince1970: 1), payload: sessionPayload(pieceID: pieceA, start: inst(2026, 3, 10, 10, 0, calendar: Self.ny), minutes: 30)))
+        try ledger.append(LedgerEvent(committedAt: Date(timeIntervalSince1970: 2), payload: sessionPayload(pieceID: pieceB, start: inst(2026, 3, 10, 11, 0, calendar: Self.ny), minutes: 45)))
+
+        #expect(Derivations.weeklyMinutes(in: ledger, pieceID: pieceA, reference: reference, calendar: Self.ny) == 30)
+        #expect(Derivations.weeklyMinutes(in: ledger, pieceID: pieceB, reference: reference, calendar: Self.ny) == 45)
+        #expect(Derivations.weeklyMinutes(in: ledger, pieceID: UUID(), reference: reference, calendar: Self.ny) == nil)
+    }
+
+    @Test("piece minute derivations attribute a switched session by its splits")
+    func splitScopedPieceMinutes() throws {
+        var ledger = Ledger()
+        let instrumentID = UUID()
+        let etudeID = UUID()
+        let scalesID = UUID()
+        let sessionID = UUID()
+        let start = inst(2026, 3, 10, 10, 0, calendar: Self.ny)
+        let reference = inst(2026, 3, 11, 12, 0, calendar: Self.ny)
+
+        try ledger.append(LedgerEvent(committedAt: Date(timeIntervalSince1970: 1), payload: .piece(Piece(id: etudeID, instrumentID: instrumentID, title: "Etude"))))
+        try ledger.append(LedgerEvent(committedAt: Date(timeIntervalSince1970: 2), payload: .piece(Piece(id: scalesID, instrumentID: instrumentID, title: "Scales"))))
+        try ledger.append(LedgerEvent(committedAt: Date(timeIntervalSince1970: 3), payload: sessionPayload(id: sessionID, pieceID: etudeID, start: start, minutes: 60)))
+        try ledger.append(LedgerEvent(committedAt: Date(timeIntervalSince1970: 4), payload: .sessionSplit(SessionSplit(sessionID: sessionID, label: "Etude", startedAt: start, endedAt: start.addingTimeInterval(20 * 60)))))
+        try ledger.append(LedgerEvent(committedAt: Date(timeIntervalSince1970: 5), payload: .sessionSplit(SessionSplit(sessionID: sessionID, label: "Scales", startedAt: start.addingTimeInterval(20 * 60), endedAt: start.addingTimeInterval(60 * 60)))))
+
+        #expect(Derivations.weeklyMinutes(in: ledger, pieceID: etudeID, reference: reference, calendar: Self.ny) == 20)
+        #expect(Derivations.weeklyMinutes(in: ledger, pieceID: scalesID, reference: reference, calendar: Self.ny) == 40)
+        #expect(Derivations.pieceMinutes(in: ledger, pieceID: etudeID) == 20)
+        #expect(Derivations.pieceMinutes(in: ledger, pieceID: scalesID) == 40)
+        #expect(Derivations.daysSinceLast(in: ledger, pieceID: etudeID, reference: reference, calendar: Self.ny) == 1)
+        #expect(Derivations.daysSinceLast(in: ledger, pieceID: scalesID, reference: reference, calendar: Self.ny) == 1)
+    }
 }
 
 // MARK: - Backup codec
