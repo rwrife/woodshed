@@ -16,6 +16,8 @@
 		A10000000000000000000108 /* StopConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000208 /* StopConfirmationView.swift */; };
 		A10000000000000000000109 /* SessionCaptureUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000209 /* SessionCaptureUITests.swift */; };
 		A1000000000000000000010A /* PracticeWorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000020A /* PracticeWorkspaceView.swift */; };
+		A1000000000000000000010B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000020B /* SettingsView.swift */; };
+		A1000000000000000000010C /* RestorePreviewUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000020C /* RestorePreviewUITests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,6 +41,8 @@
 		A10000000000000000000208 /* StopConfirmationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopConfirmationView.swift; sourceTree = "<group>"; };
 		A10000000000000000000209 /* SessionCaptureUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionCaptureUITests.swift; sourceTree = "<group>"; };
 		A1000000000000000000020A /* PracticeWorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeWorkspaceView.swift; sourceTree = "<group>"; };
+		A1000000000000000000020B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A1000000000000000000020C /* RestorePreviewUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestorePreviewUITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +82,7 @@
 				A10000000000000000000207 /* RunningSessionView.swift */,
 				A10000000000000000000208 /* StopConfirmationView.swift */,
 				A1000000000000000000020A /* PracticeWorkspaceView.swift */,
+				A1000000000000000000020B /* SettingsView.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -87,6 +92,7 @@
 			children = (
 				A10000000000000000000203 /* WoodshedLaunchTests.swift */,
 				A10000000000000000000209 /* SessionCaptureUITests.swift */,
+				A1000000000000000000020C /* RestorePreviewUITests.swift */,
 			);
 			path = UITests;
 			sourceTree = "<group>";
@@ -189,6 +195,7 @@
 				A10000000000000000000107 /* RunningSessionView.swift in Sources */,
 				A10000000000000000000108 /* StopConfirmationView.swift in Sources */,
 				A1000000000000000000010A /* PracticeWorkspaceView.swift in Sources */,
+				A1000000000000000000010B /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -198,6 +205,7 @@
 			files = (
 				A10000000000000000000103 /* WoodshedLaunchTests.swift in Sources */,
 				A10000000000000000000109 /* SessionCaptureUITests.swift in Sources */,
+				A1000000000000000000010C /* RestorePreviewUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

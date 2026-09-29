@@ -294,6 +294,7 @@ struct PracticeWallView: View {
     @ObservedObject var captureModel: SessionCaptureViewModel
     @ObservedObject var wallModel: PracticeWorkspaceViewModel
     @State private var showingAddPiece = false
+    @State private var showingSettings = false
 
     var body: some View {
         ScrollView {
@@ -389,6 +390,10 @@ struct PracticeWallView: View {
             }
         }
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Settings", systemImage: "gearshape") { showingSettings = true }
+                    .accessibilityIdentifier("settings.open")
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showingAddPiece = true
@@ -401,6 +406,12 @@ struct PracticeWallView: View {
         }
         .sheet(isPresented: $showingAddPiece, onDismiss: wallModel.reload) {
             AddPieceSheet(model: captureModel, isPresented: $showingAddPiece)
+        }
+        .sheet(isPresented: $showingSettings, onDismiss: {
+            captureModel.loadLibrary()
+            wallModel.reload()
+        }) {
+            SettingsView(store: captureModel.store, databaseURL: WoodshedStoreContainer.storeURL())
         }
     }
 }

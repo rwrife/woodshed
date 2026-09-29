@@ -66,7 +66,8 @@ let package = Package(
                 "WoodshedStore",
                 "WoodshedStoreTestSupport",
                 .product(name: "WoodshedKit", package: "WoodshedKit"),
-            ]
+            ],
+            resources: [.copy("Fixtures")]
         ),
     ]
 )
