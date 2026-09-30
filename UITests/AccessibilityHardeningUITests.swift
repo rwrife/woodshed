@@ -25,14 +25,15 @@ final class AccessibilityHardeningUITests: XCTestCase {
         app.descendants(matching: .any)[identifier].firstMatch
     }
 
-    /// Reveal an interactive control: ask the element's own container to
-    /// scroll it into view first, then fall back to bounded app-level
-    /// swipes (SwiftUI virtualization + AX-size layouts push rows off
-    /// screen; a bare waitForExistence false-fails on real devices).
+    /// Reveal an interactive control: element-scoped swipe first (scrolls
+    /// the element's own container), then bounded app-level swipes as a
+    /// fallback. NOTE: `element.scroll(to: .visible)` does NOT exist in the
+    /// pinned iOS 26 SDK (compile error: resolves to scroll(byDeltaX:));
+    /// element gesture methods throw on missing elements, so they are only
+    /// invoked when `exists` is already true.
     private func reveal(_ element: XCUIElement) -> Bool {
         if element.exists, (try? element.isHittable) == true { return true }
-        _ = try? element.scroll(to: .visible)
-        if element.exists, (try? element.isHittable) == true { return true }
+        if element.exists { element.swipeUp() }
         for _ in 0..<6 {
             if element.exists, (try? element.isHittable) == true { return true }
             app.swipeUp()
@@ -45,8 +46,6 @@ final class AccessibilityHardeningUITests: XCTestCase {
     /// can report `isHittable == false` forever, so a hittability-keyed
     /// helper false-fails genuinely-present disabled targets.
     private func revealExists(_ element: XCUIElement) -> Bool {
-        if element.exists { return true }
-        _ = try? element.scroll(to: .visible)
         if element.exists { return true }
         for _ in 0..<6 {
             if element.exists { return true }
