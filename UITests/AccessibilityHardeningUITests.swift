@@ -25,15 +25,14 @@ final class AccessibilityHardeningUITests: XCTestCase {
         app.descendants(matching: .any)[identifier].firstMatch
     }
 
-    /// Reveal an interactive control: element-scoped swipe first (scrolls
-    /// the element's own container), then bounded app-level swipes as a
-    /// fallback. NOTE: `element.scroll(to: .visible)` does NOT exist in the
-    /// pinned iOS 26 SDK (compile error: resolves to scroll(byDeltaX:));
-    /// element gesture methods throw on missing elements, so they are only
-    /// invoked when `exists` is already true.
+    /// Reveal an interactive control: bounded app-level swipes until the
+    /// control is hittable. Element-scoped gestures are NOT used: an
+    /// offscreen control below the fold has an EMPTY visible frame, and
+    /// `element.swipeUp()` on it aborts the test with "visible frame is
+    /// empty" (run 36651408905). The screen-level scroll view always
+    /// occupies the swipe band, so app-level swipes scroll it reliably.
     private func reveal(_ element: XCUIElement) -> Bool {
         if element.exists, (try? element.isHittable) == true { return true }
-        if element.exists { element.swipeUp() }
         for _ in 0..<6 {
             if element.exists, (try? element.isHittable) == true { return true }
             app.swipeUp()
