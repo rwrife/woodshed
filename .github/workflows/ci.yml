@@ -32,6 +32,8 @@ jobs:
         run: swift test --package-path Packages/WoodshedStore
       - name: Zero-network gate
         run: bash scripts/check_zero_network.sh
+      - name: Semantic-color (contrast) gate
+        run: bash scripts/check_semantic_colors.sh
       - name: Gitignore keeps signing material out
         run: |
           set -e

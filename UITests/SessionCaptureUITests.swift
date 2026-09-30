@@ -50,11 +50,17 @@ final class SessionCaptureUITests: XCTestCase {
     /// Ledger summaries can sit below the fold on compact simulators. Scroll
     /// the frontmost app surface: SwiftUI does not consistently expose the
     /// enclosing ScrollView identifier after returning from the review flow.
+    /// Each swipe is followed by a short existence poll — swiping faster
+    /// than the scroll view re-renders (or exhausting a fixed swipe count
+    /// while the row is still offscreen) is what made this assertion flake
+    /// on hosted runners (runs 36645853539 / 36652555994).
     private func ledgerStaticText(containing labelFragment: String) -> XCUIElement {
         let predicate = NSPredicate(format: "label CONTAINS[c] %@", labelFragment)
         let match = app.staticTexts.matching(predicate).firstMatch
-        for _ in 0..<4 where !match.exists {
+        if match.waitForExistence(timeout: 3) { return match }
+        for _ in 0..<6 {
             app.swipeUp()
+            if match.waitForExistence(timeout: 2) { return match }
         }
         return match
     }

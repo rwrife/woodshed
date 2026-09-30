@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 import WoodshedKit
 import WoodshedStore
 
@@ -303,6 +304,19 @@ struct PracticeWallView: View {
             // session save. Piece counts are intentionally small enough that a
             // non-lazy stack is the correct accessibility tradeoff here.
             VStack(spacing: 16) {
+                // Dynamic Type proof surface (issue #7): renders the resolved
+                // UIKit content-size category so UI tests can prove the AX
+                // launch override actually applied before asserting layout.
+                // Gated behind a test-only launch flag; production launches
+                // never see it. Kept visible — an accessibilityHidden probe
+                // would be invisible to XCUITest itself.
+                if ProcessInfo.processInfo.arguments.contains("-ui-testing-dynamic-type-probe") {
+                    Text(UIApplication.shared.preferredContentSizeCategory.rawValue)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("wall.sizeCategory")
+                }
+
                 Button {
                     captureModel.startSession(piece: captureModel.freePracticePiece())
                 } label: {
