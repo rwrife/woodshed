@@ -31,6 +31,12 @@ enum WoodshedStoreContainer {
     static let uiTestingArgument = "-ui-testing"
     static let uiTesting = ProcessInfo.processInfo.arguments.contains(uiTestingArgument)
 
+    /// Test-only launch flag: starts the app with baseline records but
+    /// without the demo piece seed, so the practice wall renders its true
+    /// empty state (issue #7 UI matrix: wall empty state).
+    static let uiTestingEmptyWallArgument = "-ui-testing-empty-wall"
+    static let uiTestingEmptyWall = ProcessInfo.processInfo.arguments.contains(uiTestingEmptyWallArgument)
+
     static let freeInstrumentID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
     static let freePieceID = UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
 
@@ -46,12 +52,12 @@ enum WoodshedStoreContainer {
                 clearCaptureDefaultsForUITesting()
             }
             let opened = try WoodshedStore.open(at: storeURL())
-            try ensureBaselineRecords(in: opened, includeUITestSeedData: uiTesting)
+            try ensureBaselineRecords(in: opened, includeUITestSeedData: uiTesting && !uiTestingEmptyWall)
             return opened
         } catch {
             NSLog("WoodshedStore open failed: \(error)")
             let fallback = try! WoodshedStore.inMemory()
-            try? ensureBaselineRecords(in: fallback, includeUITestSeedData: true)
+            try? ensureBaselineRecords(in: fallback, includeUITestSeedData: uiTesting && !uiTestingEmptyWall)
             return fallback
         }
     }()
