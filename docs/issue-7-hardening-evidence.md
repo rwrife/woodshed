@@ -77,12 +77,18 @@ itself is not XCUITest-scriptable; see follow-up below.
    regression fails CI.
 3. **FILED as follow-up issue** — *Midnight-less DST days*: `Derivations.dayStreak`
    anchors a calendar day via `Calendar.date(from: dayComponents)`; in zones
-   whose spring-forward skips local midnight (e.g. `America/Havana`,
+   whose spring-forward transition skips local midnight (e.g. `America/Havana`,
    `America/Santiago`), the anchor day instant is non-existent and the
    streak correctly degrades to `nil` ("unknown") for references on such
    days. Conservative-but-imprecise; the fuzz time-zone set is restricted to
    zones that always have a midnight, with this note as the trail. Behavior
    change deferred past the hardening pass deliberately (RC risk).
+   **RESOLVED in issue #15**: `dayStreak` now anchors a day at its earliest
+   real instant (`Derivations.dayAnchor`), which covers both Foundation
+   semantics (Darwin returns `nil` for skipped midnights; Linux resolves to
+   the post-transition instant). `America/Havana` and `America/Santiago`
+   joined the fuzz matrix; the oracle's week keys were pinned to each day's
+   first instant to survive Havana's ambiguous fall-back midnight.
 4. **FILED as follow-up issue** — *manual VoiceOver + Increase Contrast
    walkthrough*: rotor navigation, hint phrasing, and contrast-appearance
    screenshots cannot be scripted from XCUITest; required pre-RC with the
