@@ -24,10 +24,12 @@ import Testing
 //   exactly once, so a boundary that double-counts or drops a day-29/31 or
 //   DST edge session fails.
 //
-// Time-zone set is restricted to zones whose DST transitions never remove
-// local midnight (the streak implementation anchors a day at hour 0 of the
-// component set); zones with midnight-less spring-forward days are tracked
-// as follow-up issue, see docs/issue-7-hardening-evidence.md.
+// Time-zone set includes zones whose spring-forward transition removes
+// local midnight (`America/Havana`, `America/Santiago`) since issue #15
+// fixed the streak day-anchor to use the day's earliest real instant;
+// before that fix those zones were excluded (docs/issue-7-hardening-
+// evidence.md Findings-3) because the midnight anchor degraded streaks to
+// unknown on the gap day.
 
 // MARK: - Fixed-seed fuzz harness
 
@@ -39,6 +41,8 @@ private let fuzzTimeZones = [
     "Pacific/Chatham",    // +12:45/+13:45 — 45-minute offset with DST
     "Australia/Lord_Howe", // +10:30/+11:00/+10:30 — 30-minute DST shift, southern hemisphere
     "Pacific/Auckland",   // southern-hemisphere DST 2026-09-27 / 2026-04-05
+    "America/Havana",     // midnight-less spring-forward 2026-03-08 (00:00→01:00) — issue #15
+    "America/Santiago",   // midnight-less spring-forward 2026-09-06 (00:00→01:00) — issue #15
 ]
 
 /// Anchored windows so randomized sessions reliably straddle real DST
@@ -49,6 +53,7 @@ private let fuzzWindows: [(start: (Int, Int, Int), days: Int)] = [
     ((2026, 3, 22), 24),   // EU Mar 29, Lord Howe Apr 5, Chatham Apr 5
     ((2026, 9, 25), 18),   // Auckland Sep 27, Lord Howe-style southern spring
     ((2026, 10, 25), 14),  // EU Oct 25, Lord Howe Oct 4 carry-over, US Nov 1
+    ((2026, 9, 1), 10),    // Santiago midnight-less spring-forward (Sep 6) — issue #15
 ]
 
 private struct FuzzLedger {
@@ -161,15 +166,53 @@ private func oracleStreak(daySet: Set<Int>, reference: Date, calendar: Calendar)
 /// Week containing `reference` per the same firstWeekday contract, computed
 /// by stepping start-of-day backwards until the weekday matches — a
 /// day-by-day walk, not `dateInterval(of: .weekOfYear:)`.
+///
+/// The backward step takes each previous day's EARLIEST real instant (its
+/// `startOfDay` result re-anchored through explicit date components), not
+/// a raw `date(byAdding: .day)`. On fall-back days whose midnight is
+/// ambiguous (America/Havana 2026-11-01, where 00:00 recurs), `startOfDay`
+/// can return the SECOND occurrence and a raw day-step lands back on the
+/// ambiguous hour; re-extracting the calendar-day components (no hour) and
+/// re-resolving pins each step to the day's first instant, exactly like
+/// `Derivations.dayAnchor` does for the streak. Without this, the oracle
+/// produced two week-start keys one hour apart on the same Sunday and the
+/// partition test double-counted one bucket (exposed when Havana joined
+/// the matrix for issue #15).
 private func oracleWeekInterval(containing reference: Date, calendar: Calendar) -> DateInterval {
-    var start = calendar.startOfDay(for: reference)
+    // Entry point too: `startOfDay` of an instant inside an ambiguous
+    // (fall-back duplicated) midnight can return the SECOND occurrence;
+    // re-anchor through explicit day components so the oracle's week key
+    // is always the day's first instant, matching `dateInterval(of:)`.
+    var start = firstInstantOfDay(calendar.startOfDay(for: reference), calendar: calendar)
     var guardCount = 0
     while calendar.component(.weekday, from: start) != calendar.firstWeekday && guardCount < 7 {
-        start = calendar.date(byAdding: .day, value: -1, to: start)!
+        start = previousDayStart(start, calendar: calendar)
         guardCount += 1
     }
     let end = (0..<7).reduce(start) { partial, _ in calendar.date(byAdding: .day, value: 1, to: partial)! }
     return DateInterval(start: start, end: end)
+}
+
+/// Re-anchor any instant to the earliest real instant of its own calendar
+/// day (ambiguous fall-back midnights resolve to the FIRST occurrence).
+private func firstInstantOfDay(_ instant: Date, calendar: Calendar) -> Date {
+    let comps = calendar.dateComponents([.year, .month, .day], from: instant)
+    return Derivations.dayAnchor(for: comps, calendar: calendar) ?? calendar.startOfDay(for: instant)
+}
+
+/// The earliest real instant of the calendar day before `instant`'s.
+private func previousDayStart(_ instant: Date, calendar: Calendar) -> Date {
+    let previousDay: Date = {
+        // Step a midday instant back: midday always exists, and its
+        // calendar day is unambiguously the previous day.
+        let noon = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: instant)!
+        let moved = calendar.date(byAdding: .day, value: -1, to: noon)!
+        return calendar.startOfDay(for: moved)
+    }()
+    // Re-anchor to the day's first instant via explicit day components so
+    // an ambiguous startOfDay (DST fall-back duplicated midnight) cannot
+    // keep the oracle one hour off the implementation's week boundary.
+    return firstInstantOfDay(previousDay, calendar: calendar)
 }
 
 private func oracleWeeklyMinutes(_ sessions: [Session], reference: Date, calendar: Calendar) -> Int? {
