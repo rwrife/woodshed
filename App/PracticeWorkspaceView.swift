@@ -336,6 +336,10 @@ struct PracticeWallView: View {
     /// Reveals the ledger only when a *newly* committed session has not
     /// been shown yet: the anchor is unique per commit, so the reveal
     /// happens exactly once per commit — never on ordinary wall revisits.
+    /// (Run 37117908376 evidence: the seeded first-layout reveal worked —
+    /// test 1's ledger row appeared with no gesture fallback — so no
+    /// deferred re-write is attempted; a `DispatchQueue.main.async`
+    /// capture would also risk Swift 6 Sendable violations on `Binding`.)
     private func revealLedgerIfNew(_ summary: SessionCaptureViewModel.CommittedSessionSummary?) {
         guard let anchor = Self.pendingReveal(for: summary) else { return }
         Self.lastRevealedAnchor = anchor

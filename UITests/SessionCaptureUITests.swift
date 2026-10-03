@@ -85,12 +85,24 @@ final class SessionCaptureUITests: XCTestCase {
 
     /// Self-diagnosing evidence pack for the ledger asserts (issue #18):
     /// if the reveal ever fails again, the failure message itself must
-    /// show keyboard state, the ledger count probe's existence/frame, and
-    /// every "Sessions"-labelled text with frames — instead of an
-    /// evidence-free retry loop over opaque flakes.
+    /// show WHICH app state we're actually in (wall vs stuck-on-review vs
+    /// store-unavailable) plus keyboard state, the ledger count probe,
+    /// and the rendered static texts — instead of an evidence-free retry
+    /// loop over opaque flakes.
     private func ledgerDiagnostics(containing labelFragment: String) -> String {
         var lines: [String] = ["fragment=\"\(labelFragment)\""]
         lines.append("keyboardVisible=\(app.keyboards.count > 0)")
+        // State discriminators: the wall nav title vs the review nav
+        // title, the wall's ledger-unavailable fallback, and any save
+        // error the model surfaced.
+        lines.append("wallNavVisible=\(app.navigationBars["Practice Wall"].exists)")
+        lines.append("practiceWallVisible=\(anyElement("practice.wall").exists)")
+        lines.append("reviewStillVisible=\(app.staticTexts["capture.review.title"].exists)")
+        lines.append("ledgerUnavailableVisible=\(anyElement("ledger.unavailable").exists)")
+        let status = anyElement("capture.status")
+        if status.exists {
+            lines.append("capture.status.label=\"\(status.label)\"")
+        }
         let countProbe = anyElement("ledger.sessions.count")
         let countExists = countProbe.exists
         lines.append("ledger.sessions.count.exists=\(countExists)")
@@ -104,6 +116,12 @@ final class SessionCaptureUITests: XCTestCase {
             let hittable = (try? text.isHittable) ?? false
             lines.append("  label=\"\(text.label)\" frame=\(text.frame) hittable=\(hittable)")
         }
+        // Full rendered-text truth (bounded): the wall is a non-lazy
+        // VStack, so if the ledger row exists at all it must appear here.
+        let texts = app.staticTexts.allElementsBoundByIndex
+        lines.append("staticTextCount=\(texts.count)")
+        let labels = texts.prefix(40).map { "\"\($0.label)\"" }
+        lines.append("staticTexts=[\(labels.joined(separator: ", "))]")
         return lines.joined(separator: "\n")
     }
 
