@@ -103,7 +103,6 @@ struct LedgerSummaryView: View {
         .font(.footnote)
         .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .id(Self.anchorID(for: model.lastCommittedSummary))
         .onAppear(perform: refresh)
         .onChange(of: model.lastCommittedSummary) { _, _ in refresh() }
     }

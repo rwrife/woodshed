@@ -291,6 +291,7 @@ struct PracticeWorkspaceView: View {
     }
 }
 
+@MainActor
 struct PracticeWallView: View {
     @ObservedObject var captureModel: SessionCaptureViewModel
     @ObservedObject var wallModel: PracticeWorkspaceViewModel
@@ -301,17 +302,44 @@ struct PracticeWallView: View {
     /// session, so the just-written row is deterministically on screen
     /// instead of racing app-level swipe bursts on hosted runners.
     @State private var revealedSectionID: String?
+    /// Last anchor revealed in this process (issue #18 review: the wall
+    /// is REBUILT after commit and after Discard — instance @State would
+    /// not survive, letting a stale commit re-jump the wall on unrelated
+    /// rebuilds). The app is single-window iPhone-only, so one process-
+    /// wide MainActor tracker is sufficient: the reveal fires exactly
+    /// once per commit, ever.
+    private static var lastRevealedAnchor: String?
 
     init(captureModel: SessionCaptureViewModel, wallModel: PracticeWorkspaceViewModel) {
         self.captureModel = captureModel
         self.wallModel = wallModel
-        // Seed the reveal BEFORE first layout when the wall reappears after
-        // a commit (returning from the review flow rebuilds this view):
-        // `scrollPosition(id:)` then lands the ledger on screen in the
-        // first layout pass instead of waiting for an onAppear mutation.
-        if captureModel.lastCommittedSummary != nil {
-            _revealedSectionID = State(initialValue: LedgerSummaryView.anchorID(for: captureModel.lastCommittedSummary))
+        // The wall view is rebuilt when a session ends (BootstrapHomeView
+        // swaps roots on state changes): seed the reveal BEFORE first
+        // layout — but only for a commit that has not been revealed yet,
+        // so a later Discard/return rebuild never re-jumps to an old row.
+        // init deliberately does NOT mutate the tracker: a constructed-but
+        // -never-displayed value must not consume the reveal; onAppear
+        // (which only runs for a displayed wall) marks it.
+        if let anchor = Self.pendingReveal(for: captureModel.lastCommittedSummary) {
+            _revealedSectionID = State(initialValue: anchor)
         }
+    }
+
+    /// The anchor to reveal for `summary`, or nil when that commit was
+    /// already revealed (nil for no commit at all).
+    private static func pendingReveal(for summary: SessionCaptureViewModel.CommittedSessionSummary?) -> String? {
+        guard let summary else { return nil }
+        let anchor = LedgerSummaryView.anchorID(for: summary)
+        return anchor == lastRevealedAnchor ? nil : anchor
+    }
+
+    /// Reveals the ledger only when a *newly* committed session has not
+    /// been shown yet: the anchor is unique per commit, so the reveal
+    /// happens exactly once per commit — never on ordinary wall revisits.
+    private func revealLedgerIfNew(_ summary: SessionCaptureViewModel.CommittedSessionSummary?) {
+        guard let anchor = Self.pendingReveal(for: summary) else { return }
+        Self.lastRevealedAnchor = anchor
+        revealedSectionID = anchor
     }
 
     var body: some View {
@@ -409,27 +437,38 @@ struct PracticeWallView: View {
                         .multilineTextAlignment(.center)
                 }
 
+                // Commit-unique anchor id on the DIRECT child of the
+                // .scrollTargetLayout() VStack: when a commit lands this
+                // row gets a new id, so the wall's `.scrollPosition(id:)`
+                // binding resolves it to a position (issue #18
+                // deterministic reveal). .scrollTargetLayout() alone
+                // registers id-bearing children as position targets.
                 LedgerSummaryView(model: captureModel)
+                    .id(LedgerSummaryView.anchorID(for: captureModel.lastCommittedSummary))
             }
             .padding(16)
+            // Register the wall content as the scroll-target layout so
+            // `.scrollPosition(id:)` can resolve the ledger anchor id
+            // (issue #18 review finding: without this the reveal would
+            // fall back to free-scroll position semantics, not an id).
+            .scrollTargetLayout()
         }
         .scrollPosition(id: $revealedSectionID)
         .navigationTitle("Practice Wall")
         .accessibilityIdentifier("practice.wall")
-        // Issue #18: when the wall (re)appears with a committed session —
-        // or a commit lands while it is visible — scroll the ledger row the
-        // user just wrote into view deterministically. App-level swipe
-        // bursts in UI tests could not reliably reveal this row on some
-        // hosted runners; the app itself now owns the reveal.
+        // Issue #18: when a commit lands while the wall is visible,
+        // scroll the ledger row the user just wrote into view
+        // deterministically. App-level swipe bursts in UI tests could not
+        // reliably reveal this row on some hosted runners; the app itself
+        // now owns the reveal. Repeated onAppear (back from piece detail)
+        // must NOT re-trigger the jump — revealLedgerIfNew fires once per
+        // commit, and the commit flow's wall rebuild is covered by the
+        // seed in init.
         .onAppear {
-            if captureModel.lastCommittedSummary != nil {
-                revealedSectionID = LedgerSummaryView.anchorID(for: captureModel.lastCommittedSummary)
-            }
+            revealLedgerIfNew(captureModel.lastCommittedSummary)
         }
         .onChange(of: captureModel.lastCommittedSummary) { _, summary in
-            if let summary {
-                revealedSectionID = LedgerSummaryView.anchorID(for: summary)
-            }
+            revealLedgerIfNew(summary)
         }
         .accessibilityRotor("Practice pieces") {
             ForEach(wallModel.cards) { card in
