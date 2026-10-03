@@ -20,6 +20,48 @@ final class SessionCaptureUITests: XCTestCase {
         element.waitForExistence(timeout: timeout)
     }
 
+    /// Taps Review Save and proves the app actually LEFT the confirm flow.
+    /// Run 37120931003 (test 1) proved the root cause: the synthesized tap
+    /// on `capture.review.save` can complete with no UI change (XCUITest
+    /// `Synthesize event` + `Wait for idle` green, app still on Review
+    /// Session, no commit). `bootstrap.home` wraps EVERY app state
+    /// (wall/running/confirming), so it cannot detect this — the old flow
+    /// then raced straight into the ledger assert. Bounded retry (3 taps)
+    /// where each tap must make the review title disappear
+    /// (`wait(forNonexistence:)`); a tap is only attempted while the
+    /// review screen is demonstrably up, so a successful-but-slow
+    /// transition can never be double-tapped or false-failed. A surfaced
+    /// "Save failed" status stops the retry — a throw needs no re-tap.
+    private func tapSaveAndAwaitWall(_ save: XCUIElement) {
+        let reviewTitle = app.staticTexts["capture.review.title"]
+        for attempt in 1...3 {
+            guard reviewTitle.waitForExistence(timeout: attempt == 1 ? 5 : 2) else {
+                return // transition already complete
+            }
+            // Only tap while the button is demonstrably present; a
+            // successful-but-slow transition removes it, which also ends
+            // the retry through this guard rather than a false failure.
+            guard save.waitForExistence(timeout: 5) else { return }
+            save.tap()
+            // Bounded poll for the confirm flow to dismiss (no public
+            // wait-for-nonexistence API on XCUIElement).
+            let deadline = Date().addingTimeInterval(6)
+            while reviewTitle.exists, Date() < deadline {
+                usleep(200_000)
+            }
+            if !reviewTitle.exists {
+                return
+            }
+            let status = anyElement("capture.status")
+            if status.exists, status.label.contains("Save failed") {
+                break
+            }
+        }
+        let status = anyElement("capture.status")
+        let statusText = status.exists ? status.label : "<none>"
+        XCTFail("App never left Review Session after 3 Save taps; capture.status=\(statusText)")
+    }
+
     // MARK: - Tests
 
     @MainActor
@@ -40,8 +82,7 @@ final class SessionCaptureUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["capture.review.title"].waitForExistence(timeout: 5))
 
         let save = app.buttons["capture.review.save"]
-        XCTAssertTrue(save.waitForExistence(timeout: 5))
-        save.tap()
+        tapSaveAndAwaitWall(save)
 
         XCTAssertTrue(app.otherElements["bootstrap.home"].waitForExistence(timeout: 10))
         XCTAssertTrue(
@@ -199,8 +240,7 @@ final class SessionCaptureUITests: XCTestCase {
         }
 
         let save = app.buttons["capture.review.save"]
-        XCTAssertTrue(save.waitForExistence(timeout: 5))
-        save.tap()
+        tapSaveAndAwaitWall(save)
 
         XCTAssertTrue(app.otherElements["bootstrap.home"].waitForExistence(timeout: 10))
 
