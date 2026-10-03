@@ -44,25 +44,67 @@ final class SessionCaptureUITests: XCTestCase {
         save.tap()
 
         XCTAssertTrue(app.otherElements["bootstrap.home"].waitForExistence(timeout: 10))
-        XCTAssertTrue(ledgerStaticText(containing: "Sessions: 1").waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            ledgerStaticText(containing: "Sessions: 1").waitForExistence(timeout: 5),
+            "Ledger row 'Sessions: 1' never materialized.\n\(ledgerDiagnostics(containing: "Sessions: 1"))"
+        )
     }
 
-    /// Ledger summaries can sit below the fold on compact simulators. Scroll
-    /// the frontmost app surface: SwiftUI does not consistently expose the
-    /// enclosing ScrollView identifier after returning from the review flow.
-    /// Each swipe is followed by a short existence poll — swiping faster
-    /// than the scroll view re-renders (or exhausting a fixed swipe count
-    /// while the row is still offscreen) is what made this assertion flake
-    /// on hosted runners (runs 36645853539 / 36652555994).
+    /// Ledger summaries can sit below the fold on compact simulators. The
+    /// app now scrolls a committed ledger into view itself (issue #18), so
+    /// first wait briefly for that programmatic reveal; only then fall
+    /// back to app-level swipe bursts and sustained coordinate drags.
+    /// Each gesture is followed by a short existence poll — swiping faster
+    /// than the scroll view re-renders (or exhausting a fixed gesture
+    /// count while the row is still offscreen) is what made this assertion
+    /// flake on hosted runners (runs 36645853539 / 36652555994 /
+    /// 36837929767).
     private func ledgerStaticText(containing labelFragment: String) -> XCUIElement {
         let predicate = NSPredicate(format: "label CONTAINS[c] %@", labelFragment)
         let match = app.staticTexts.matching(predicate).firstMatch
         if match.waitForExistence(timeout: 3) { return match }
-        for _ in 0..<6 {
+        // Give the app-owned programmatic reveal (PracticeWallView
+        // `.scrollPosition` on commit) a chance to land.
+        if match.waitForExistence(timeout: 3) { return match }
+        for _ in 0..<4 {
             app.swipeUp()
             if match.waitForExistence(timeout: 2) { return match }
         }
+        // Coordinate-drag fallback: a slow, sustained press-drag has
+        // surfaced rows that fast momentum swipes never revealed on some
+        // hosted runners (the #18 failure snapshots never showed the row
+        // in the query results despite repeated swipeUp()).
+        let dragStart = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.70))
+        let dragEnd = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+        for _ in 0..<4 {
+            dragStart.press(forDuration: 0.1, thenDragTo: dragEnd)
+            if match.waitForExistence(timeout: 2) { return match }
+        }
         return match
+    }
+
+    /// Self-diagnosing evidence pack for the ledger asserts (issue #18):
+    /// if the reveal ever fails again, the failure message itself must
+    /// show keyboard state, the ledger count probe's existence/frame, and
+    /// every "Sessions"-labelled text with frames — instead of an
+    /// evidence-free retry loop over opaque flakes.
+    private func ledgerDiagnostics(containing labelFragment: String) -> String {
+        var lines: [String] = ["fragment=\"\(labelFragment)\""]
+        lines.append("keyboardVisible=\(app.keyboards.count > 0)")
+        let countProbe = anyElement("ledger.sessions.count")
+        let countExists = countProbe.exists
+        lines.append("ledger.sessions.count.exists=\(countExists)")
+        if countExists {
+            lines.append("ledger.sessions.count.frame=\(countProbe.frame)")
+        }
+        let predicate = NSPredicate(format: "label CONTAINS[c] %@", "Sessions")
+        let matches = app.staticTexts.matching(predicate).allElementsBoundByIndex
+        lines.append("staticTextsMatchingSessions=\(matches.count)")
+        for text in matches.prefix(5) {
+            let hittable = (try? text.isHittable) ?? false
+            lines.append("  label=\"\(text.label)\" frame=\(text.frame) hittable=\(hittable)")
+        }
+        return lines.joined(separator: "\n")
     }
 
     @MainActor
@@ -121,6 +163,17 @@ final class SessionCaptureUITests: XCTestCase {
         noteField.tap()
         noteField.typeText("Clean phrasing on B section\n")
 
+        // Dismiss the keyboard defensively: the \n above normally submits,
+        // but a lingering keyplane would absorb every later gesture, and
+        // keyboard state was one of the unknowns in the #18 failure
+        // snapshots (which had no diagnostics). Bounded poll, never fatal.
+        let returnKey = app.keyboards.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] %@", "return")
+        ).firstMatch
+        if returnKey.waitForExistence(timeout: 2) {
+            returnKey.tap()
+        }
+
         // Content may be long; scroll inside the review scroll view so Save is hittable.
         let reviewScroll = app.scrollViews["capture.review.scroll"]
         if reviewScroll.waitForExistence(timeout: 3) {
@@ -134,15 +187,15 @@ final class SessionCaptureUITests: XCTestCase {
         XCTAssertTrue(app.otherElements["bootstrap.home"].waitForExistence(timeout: 10))
 
         let sessionsCount = ledgerStaticText(containing: "Sessions: 1")
-        XCTAssertTrue(sessionsCount.waitForExistence(timeout: 5), "Expected 1 session in ledger")
+        XCTAssertTrue(sessionsCount.waitForExistence(timeout: 5), "Expected 1 session in ledger.\n\(ledgerDiagnostics(containing: "Sessions: 1"))")
 
         let splitsCount = ledgerStaticText(containing: "Session splits: 2")
-        XCTAssertTrue(splitsCount.waitForExistence(timeout: 5), "Expected 2 splits in ledger")
+        XCTAssertTrue(splitsCount.waitForExistence(timeout: 5), "Expected 2 splits in ledger.\n\(ledgerDiagnostics(containing: "Session splits: 2"))")
 
         let tempoCount = ledgerStaticText(containing: "Tempo logs: 1")
-        XCTAssertTrue(tempoCount.waitForExistence(timeout: 5), "Expected 1 tempo log in ledger")
+        XCTAssertTrue(tempoCount.waitForExistence(timeout: 5), "Expected 1 tempo log in ledger.\n\(ledgerDiagnostics(containing: "Tempo logs: 1"))")
 
         let notesCount = ledgerStaticText(containing: "Practice notes: 1")
-        XCTAssertTrue(notesCount.waitForExistence(timeout: 5), "Expected 1 practice note in ledger")
+        XCTAssertTrue(notesCount.waitForExistence(timeout: 5), "Expected 1 practice note in ledger.\n\(ledgerDiagnostics(containing: "Practice notes: 1"))")
     }
 }

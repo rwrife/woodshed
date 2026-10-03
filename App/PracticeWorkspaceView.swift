@@ -296,6 +296,23 @@ struct PracticeWallView: View {
     @ObservedObject var wallModel: PracticeWorkspaceViewModel
     @State private var showingAddPiece = false
     @State private var showingSettings = false
+    /// Drives the deterministic ledger reveal (issue #18): set to the
+    /// ledger anchor id once the wall (re)appears with a committed
+    /// session, so the just-written row is deterministically on screen
+    /// instead of racing app-level swipe bursts on hosted runners.
+    @State private var revealedSectionID: String?
+
+    init(captureModel: SessionCaptureViewModel, wallModel: PracticeWorkspaceViewModel) {
+        self.captureModel = captureModel
+        self.wallModel = wallModel
+        // Seed the reveal BEFORE first layout when the wall reappears after
+        // a commit (returning from the review flow rebuilds this view):
+        // `scrollPosition(id:)` then lands the ledger on screen in the
+        // first layout pass instead of waiting for an onAppear mutation.
+        if captureModel.lastCommittedSummary != nil {
+            _revealedSectionID = State(initialValue: LedgerSummaryView.anchorID(for: captureModel.lastCommittedSummary))
+        }
+    }
 
     var body: some View {
         ScrollView {
@@ -396,8 +413,24 @@ struct PracticeWallView: View {
             }
             .padding(16)
         }
+        .scrollPosition(id: $revealedSectionID)
         .navigationTitle("Practice Wall")
         .accessibilityIdentifier("practice.wall")
+        // Issue #18: when the wall (re)appears with a committed session —
+        // or a commit lands while it is visible — scroll the ledger row the
+        // user just wrote into view deterministically. App-level swipe
+        // bursts in UI tests could not reliably reveal this row on some
+        // hosted runners; the app itself now owns the reveal.
+        .onAppear {
+            if captureModel.lastCommittedSummary != nil {
+                revealedSectionID = LedgerSummaryView.anchorID(for: captureModel.lastCommittedSummary)
+            }
+        }
+        .onChange(of: captureModel.lastCommittedSummary) { _, summary in
+            if let summary {
+                revealedSectionID = LedgerSummaryView.anchorID(for: summary)
+            }
+        }
         .accessibilityRotor("Practice pieces") {
             ForEach(wallModel.cards) { card in
                 AccessibilityRotorEntry(card.piece.title, id: card.id)
