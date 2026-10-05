@@ -86,6 +86,9 @@ count=$(grep -c "TARGETED_DEVICE_FAMILY = 1;" Woodshed.xcodeproj/project.pbxproj
 echo "iPhone-only pre-build grep: PASS ($count configurations declare family 1 only)" \
   | tee "$artifact_dir/iphone-only-pregrep.log"
 
+phase="release_project_contract"
+python3 Scripts/check_release_project.py 2>&1 | tee "$artifact_dir/release-project-check.log"
+
 phase="toolchain_selection"
 python3 Scripts/select_xcode.py \
   --toolchain toolchain.json \
