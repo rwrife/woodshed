@@ -39,6 +39,19 @@ struct StopConfirmationView: View {
                     .font(.headline)
                     .accessibilityIdentifier("capture.review.total")
 
+                // Surface save failures IN the confirm flow (issue #18):
+                // the review screen keeps focus when commitSession throws,
+                // and the wall-side `capture.status` never renders in that
+                // state — without this, a failed save was indistinguishable
+                // from a lost tap in UI-test diagnostics.
+                if let status = model.statusMessage, status.hasPrefix("Save failed") {
+                    Text(status)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .accessibilityIdentifier("capture.status")
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 HStack(spacing: 12) {
                     Button(role: .cancel) {
                         model.cancelConfirmation()
