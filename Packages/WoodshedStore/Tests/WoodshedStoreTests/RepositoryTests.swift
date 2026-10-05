@@ -118,6 +118,33 @@ struct RepositoryTests {
         }
     }
 
+    @Test("split at exact session start survives millisecond storage rounding")
+    func splitAtSubmillisecondSessionStart() throws {
+        for fraction in [0.0004, 0.0006] {
+            let harness = try ScenarioHarness()
+            let start = date(1_780_000_000 + fraction)
+            let session = Session(pieceID: harness.piece.id, startedAt: start, endedAt: start.addingTimeInterval(60))
+            try harness.store.sessions.append(session, committedAt: date(1))
+            try harness.fake.sessions.registerPiece(id: harness.piece.id)
+            try harness.fake.sessions.append(session, committedAt: date(1))
+
+            let tied = SessionSplit(sessionID: session.id, label: "exact tie", startedAt: start, endedAt: start.addingTimeInterval(60))
+            try harness.store.sessions.append(split: tied, sessionCommittedAt: date(1), committedAt: date(1))
+            try harness.fake.sessions.append(split: tied, sessionCommittedAt: date(1), committedAt: date(1))
+            #expect(try harness.store.sessions.currentSplits(sessionID: session.id).map(\.id) == [tied.id])
+
+            // A genuinely earlier split remains invalid; quantization must
+            // not relax the chronological guard beyond storage precision.
+            let early = SessionSplit(sessionID: session.id, label: "early", startedAt: start.addingTimeInterval(-0.002), endedAt: start)
+            #expect(throws: WoodshedStoreError.splitBeforeSessionStart(sessionID: session.id, splitID: early.id)) {
+                try harness.store.sessions.append(split: early, sessionCommittedAt: date(1), committedAt: date(1))
+            }
+            #expect(throws: WoodshedStoreError.splitBeforeSessionStart(sessionID: session.id, splitID: early.id)) {
+                try harness.fake.sessions.append(split: early, sessionCommittedAt: date(1), committedAt: date(1))
+            }
+        }
+    }
+
     @Test("GRDB and in-memory repositories agree on the full ledger scenario")
     func grdbMatchesInMemory() throws {
         let harness = try ScenarioHarness()

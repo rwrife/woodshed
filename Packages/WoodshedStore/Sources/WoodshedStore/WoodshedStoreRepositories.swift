@@ -247,7 +247,17 @@ public struct GRDBSessionRepository: SessionRepository {
                 throw WoodshedStoreError.parentNotFound(table: "sessions", id: split.sessionID)
             }
             let sessionStartedAt: Date = sessionRow["started_at"]
-            guard split.startedAt >= sessionStartedAt else {
+            // Compare on equal footing: both sides at the database's
+            // millisecond storage resolution. SQLite/GRDB round sub-ms
+            // timestamps to the nearest millisecond, so an exact
+            // in-memory tie (`split.startedAt == session.startedAt`) can
+            // otherwise round UP past the in-memory value and spuriously
+            // trip the guard (issue #18: a session started at an
+            // arbitrary wall-clock instant commits ~half the time with a
+            // sub-ms fraction ≥ .5 that loses the tie).
+            let splitStartMillis = (split.startedAt.timeIntervalSince1970 * 1_000).rounded()
+            let sessionStartMillis = (sessionStartedAt.timeIntervalSince1970 * 1_000).rounded()
+            guard splitStartMillis >= sessionStartMillis else {
                 throw WoodshedStoreError.splitBeforeSessionStart(sessionID: split.sessionID, splitID: split.id)
             }
             try writer.execute(
