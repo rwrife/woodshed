@@ -1,0 +1,157 @@
+name: Pinned iPhone release
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload to App Store Connect and await processing (false = signed archive/export only)
+        type: boolean
+        required: true
+        default: false
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: woodshed-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 75
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      ASC_TEAM_ID: ${{ secrets.ASC_TEAM_ID }}
+    steps:
+      - name: Checkout exact release commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Select exact pinned Xcode and SDK
+        run: |
+          set -euo pipefail
+          python3 Scripts/select_xcode.py --toolchain toolchain.json > "$RUNNER_TEMP/developer-dir.txt"
+          DEVELOPER_DIR="$(<"$RUNNER_TEMP/developer-dir.txt")"
+          printf 'DEVELOPER_DIR=%s\n' "$DEVELOPER_DIR" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$DEVELOPER_DIR" xcodebuild -version
+          DEVELOPER_DIR="$DEVELOPER_DIR" xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Validate source privacy and iPhone-only policy
+        run: |
+          set -euo pipefail
+          bash scripts/check_zero_network.sh
+          bash scripts/check_semantic_colors.sh
+          python3 Scripts/check_release_project.py
+
+      - name: Materialize private API key
+        run: |
+          set -euo pipefail
+          test -n "$ASC_KEY_ID" && test -n "$ASC_ISSUER_ID" && test -n "$ASC_KEY_P8" && test -n "$ASC_TEAM_ID"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          key = os.environ['ASC_KEY_P8'].replace('\\n', '\n')
+          path = Path(os.environ['RUNNER_TEMP']) / 'AuthKey.p8'
+          path.write_text(key)
+          path.chmod(0o600)
+          if not key.startswith('-----BEGIN PRIVATE KEY-----'):
+              raise SystemExit('API key material invalid; see Actions secret configuration')
+          PY
+
+      - name: Archive signed iPhone app with pinned SDK
+        timeout-minutes: 30
+        run: |
+          set -euo pipefail
+          mkdir -p build/release
+          xcodebuild archive \
+            -project Woodshed.xcodeproj -scheme Woodshed -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/release/Woodshed.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$ASC_TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            2>&1 | tee build/release/archive.log
+
+      - name: Validate actual signed archive before upload
+        run: |
+          set -euo pipefail
+          app=build/release/Woodshed.xcarchive/Products/Applications/Woodshed.app
+          codesign --verify --deep --strict "$app"
+          python3 Scripts/check_release_archive.py "$app/Info.plist" "$GITHUB_RUN_NUMBER"
+          test -s "$app/Assets.car"
+          compgen -G "$app/AppIcon*.png" > /dev/null
+          printf 'Archive signature, icon, bundle identifier and UIDeviceFamily: PASS\n'
+
+      - name: Export signed IPA (upload only when requested)
+        timeout-minutes: 20
+        env:
+          DO_UPLOAD: ${{ github.event_name == 'push' || inputs.upload == true }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, plistlib
+          from pathlib import Path
+          options = {
+              'method': 'app-store-connect', 'signingStyle': 'automatic',
+              'teamID': os.environ['ASC_TEAM_ID'],
+              'manageAppVersionAndBuildNumber': False, 'uploadSymbols': True,
+          }
+          if os.environ['DO_UPLOAD'] == 'true':
+              options.update(destination='upload', uploadMethod='app-store-connect')
+          with Path('build/release/ExportOptions.plist').open('wb') as out:
+              plistlib.dump(options, out)
+          PY
+          xcodebuild -exportArchive \
+            -archivePath build/release/Woodshed.xcarchive \
+            -exportPath build/release/export \
+            -exportOptionsPlist build/release/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            2>&1 | tee build/release/export.log
+          if [[ "$DO_UPLOAD" != true ]]; then
+            test -s build/release/export/Woodshed.ipa
+            printf 'Signed IPA exported; upload disabled (no TestFlight claim).\n'
+          fi
+
+      - name: Await real processed TestFlight build
+        if: ${{ github.event_name == 'push' || inputs.upload == true }}
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/asc-venv"
+          "$RUNNER_TEMP/asc-venv/bin/pip" install --quiet 'PyJWT[crypto]==2.10.1'
+          "$RUNNER_TEMP/asc-venv/bin/python3" Scripts/poll_testflight.py \
+            --key "$RUNNER_TEMP/AuthKey.p8" --key-id "$ASC_KEY_ID" \
+            --issuer-id "$ASC_ISSUER_ID" --bundle-id com.infinityball.woodshed \
+            --build-number "$GITHUB_RUN_NUMBER" --timeout 900 \
+            | tee build/release/processing.txt
+
+      - name: Upload non-secret release evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-evidence-${{ github.run_id }}
+          path: |
+            build/release/processing.txt
+            build/release/Woodshed.xcarchive/Info.plist
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Remove private API key
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/AuthKey.p8" ]]; then
+            rm "$RUNNER_TEMP/AuthKey.p8"
+          fi

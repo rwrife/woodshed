@@ -19,6 +19,7 @@
 		A1000000000000000000010B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000020B /* SettingsView.swift */; };
 		A1000000000000000000010C /* RestorePreviewUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000020C /* RestorePreviewUITests.swift */; };
 		A1000000000000000000010D /* AccessibilityHardeningUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000020D /* AccessibilityHardeningUITests.swift */; };
+		A1000000000000000000010E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000020E /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +46,7 @@
 		A1000000000000000000020B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A1000000000000000000020C /* RestorePreviewUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestorePreviewUITests.swift; sourceTree = "<group>"; };
 		A1000000000000000000020D /* AccessibilityHardeningUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityHardeningUITests.swift; sourceTree = "<group>"; };
+		A1000000000000000000020E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,6 +87,7 @@
 				A10000000000000000000208 /* StopConfirmationView.swift */,
 				A1000000000000000000020A /* PracticeWorkspaceView.swift */,
 				A1000000000000000000020B /* SettingsView.swift */,
+				A1000000000000000000020E /* Assets.xcassets */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -183,7 +186,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A10000000000000000000703 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+		A10000000000000000000703 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A1000000000000000000010E /* Assets.xcassets in Resources */,); runOnlyForDeploymentPostprocessing = 0;};
 		A10000000000000000000704 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
 /* End PBXResourcesBuildPhase section */
 
@@ -225,6 +228,7 @@
 		A10000000000000000000903 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -245,6 +249,7 @@
 		A10000000000000000000904 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
 				CURRENT_PROJECT_VERSION = 1;
