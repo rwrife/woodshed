@@ -65,6 +65,19 @@ struct AddPieceSheet: View {
 /// Ledger row counts read straight from the store — doubles as the
 /// end-to-end "ledger-assert" surface for UI tests (issue #4 acceptance).
 struct LedgerSummaryView: View {
+    /// Anchor base id used by the practice-wall `ScrollView`
+    /// `.scrollPosition(id:)` to reveal the ledger deterministically once a
+    /// commit lands (issue #18: the UI asserts raced the scroll position to
+    /// reach this row on hosted runners). The anchor is suffixed with the
+    /// committed session id so consecutive commits each produce a *new* id
+    /// and therefore re-trigger the programmatic scroll.
+    static let scrollAnchorBase = "ledger.summary"
+
+    static func anchorID(for summary: SessionCaptureViewModel.CommittedSessionSummary?) -> String {
+        guard let summary else { return scrollAnchorBase }
+        return "\(scrollAnchorBase).\(summary.sessionID.uuidString)"
+    }
+
     @ObservedObject var model: SessionCaptureViewModel
     @State private var usage: StorageUsage?
 
