@@ -272,6 +272,96 @@ struct DayStreakTests {
         let refJune11UTC = inst(2026, 6, 11, 12, 0, calendar: Self.utc)
         #expect(Derivations.dayStreak(in: ledger, reference: refJune11UTC, calendar: Self.utc) == 1)
     }
+
+    // Issue #15: midnight-less spring-forward days. In zones whose
+    // spring-forward transition skips LOCAL MIDNIGHT, the old anchor
+    // (`date(from:)` of the bare day components) had no midnight instant
+    // and the streak degraded to unknown for a reference on the gap day.
+    // Fixed-seed cases below (issue #15 acceptance): the streak must equal
+    // the factually correct consecutive-day count.
+    struct MidnightLessRow {
+        let label: String
+        let zone: String
+        /// Consecutive practice days ending on the midnight-less day.
+        let sessionDays: [(Int, Int, Int)]
+        /// Sessions start at 09:00 on normal days and 01:30 on the gap day
+        /// (midnight+hours are skipped there), via `gapStartHour`.
+        let gapDay: (Int, Int, Int)
+        let reference: (Int, Int, Int)
+        let expected: Int?
+    }
+
+    @Test("midnight-less spring-forward day keeps its streak", arguments: [
+        MidnightLessRow(label: "Havana 2026-03-08 (00:00->01:00) full streak",
+                        zone: "America/Havana",
+                        sessionDays: [(2026, 3, 6), (2026, 3, 7), (2026, 3, 8)],
+                        gapDay: (2026, 3, 8), reference: (2026, 3, 8), expected: 3),
+        MidnightLessRow(label: "Havana gap day is streak end",
+                        zone: "America/Havana",
+                        sessionDays: [(2026, 3, 7), (2026, 3, 8)],
+                        gapDay: (2026, 3, 8), reference: (2026, 3, 8), expected: 2),
+        MidnightLessRow(label: "Santiago 2026-09-06 (00:00->01:00) full streak",
+                        zone: "America/Santiago",
+                        sessionDays: [(2026, 9, 4), (2026, 9, 5), (2026, 9, 6)],
+                        gapDay: (2026, 9, 6), reference: (2026, 9, 6), expected: 3),
+        MidnightLessRow(label: "gap day in the middle of a streak",
+                        zone: "America/Santiago",
+                        sessionDays: [(2026, 9, 6), (2026, 9, 7), (2026, 9, 8)],
+                        gapDay: (2026, 9, 6), reference: (2026, 9, 8), expected: 3),
+        MidnightLessRow(label: "reference day after the gap, gap day practiced",
+                        zone: "America/Havana",
+                        sessionDays: [(2026, 3, 8), (2026, 3, 9)],
+                        gapDay: (2026, 3, 8), reference: (2026, 3, 9), expected: 2),
+        MidnightLessRow(label: "non-practice reference next to the gap day stays unknown",
+                        zone: "America/Havana",
+                        sessionDays: [(2026, 3, 7), (2026, 3, 8)],
+                        gapDay: (2026, 3, 8), reference: (2026, 3, 9), expected: nil),
+    ])
+    func midnightLessSpringForward(_ row: MidnightLessRow) throws {
+        let zone = cal(row.zone)
+        var ledger = Ledger()
+        let pieceID = UUID()
+        var commit = Date(timeIntervalSince1970: 1)
+        for day in row.sessionDays {
+            // 01:30 on the gap day (midnight+hours do not exist); 09:00 elsewhere.
+            let isGap = day == row.gapDay
+            let start = inst(day.0, day.1, day.2, isGap ? 1 : 9, isGap ? 30 : 0, calendar: zone)
+            try ledger.append(LedgerEvent(committedAt: commit, payload: sessionPayload(pieceID: pieceID, start: start, minutes: 30)))
+            commit = commit.addingTimeInterval(1)
+        }
+        let referenceDay = row.reference
+        let isRefGap = referenceDay == row.gapDay
+        let reference = inst(referenceDay.0, referenceDay.1, referenceDay.2, isRefGap ? 12 : 18, 0, calendar: zone)
+        #expect(Derivations.dayStreak(in: ledger, reference: reference, calendar: zone) == row.expected, Comment(rawValue: row.label))
+    }
+
+    @Test("dayAnchor resolves the earliest real instant of a midnight-less day (issue #15)")
+    func dayAnchorEarliestInstant() {
+        // The gap day's anchor must exist, re-extract to the same calendar
+        // day, and be the day's FIRST instant (startOfDay fixpoint) on any
+        // Foundation — no invented instant outside the target day.
+        for (zone, gap) in [("America/Havana", (2026, 3, 8)), ("America/Santiago", (2026, 9, 6))] {
+            let c = cal(zone)
+            let anchor = Derivations.dayAnchor(for: DateComponents(year: gap.0, month: gap.1, day: gap.2), calendar: c)
+            #expect(anchor != nil, "gap day \(zone) \(gap) must have an anchor")
+            if let anchor {
+                let extracted = c.dateComponents([.year, .month, .day], from: anchor)
+                #expect(extracted.year == gap.0 && extracted.month == gap.1 && extracted.day == gap.2, "anchor stays on the target day (\(zone))")
+                #expect(c.startOfDay(for: anchor) == anchor, "anchor is the day's earliest instant (\(zone))")
+            }
+            // A normal day keeps its exact midnight anchor.
+            let normal = Derivations.dayAnchor(for: DateComponents(year: gap.0, month: gap.1, day: gap.2 - 1), calendar: c)
+            #expect(normal != nil)
+            if let normal {
+                #expect(c.dateComponents([.hour, .minute], from: normal) == DateComponents(hour: 0, minute: 0), "normal day anchors at midnight (\(zone))")
+            }
+        }
+        // A wholly nonexistent day (2026-02-30) anchors to nil on every
+        // Foundation — the in-day re-extraction check must reject a
+        // permissive `date(from:)` that normalizes it into March.
+        let missing = Derivations.dayAnchor(for: DateComponents(year: 2026, month: 2, day: 30), calendar: cal("UTC"))
+        #expect(missing == nil, "dayAnchor must not invent an instant outside the requested day")
+    }
 }
 
 // MARK: - Derivations: weekly minutes

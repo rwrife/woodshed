@@ -46,7 +46,11 @@ public enum Derivations {
         // instant whose re-extraction yields different components. Anchor
         // the reference day once, then step in whole days, comparing the
         // day each step instant falls on.
-        guard let referenceDayInstant = calendar.date(from: referenceDay) else { return nil }
+        // The anchor is the day's earliest real instant: midnight where it
+        // exists, otherwise the first valid hour on midnight-less
+        // spring-forward days (issue #15 — e.g. America/Havana 2026-03-08,
+        // America/Santiago 2026-09-06, where local midnight is skipped).
+        guard let referenceDayInstant = dayAnchor(for: referenceDay, calendar: calendar) else { return nil }
         var streak = 1
         var cursor = referenceDayInstant
         while let previousInstant = calendar.date(byAdding: .day, value: -1, to: cursor) {
@@ -56,6 +60,35 @@ public enum Derivations {
             cursor = previousInstant
         }
         return streak
+    }
+
+    /// The earliest real instant of a calendar day — midnight when local
+    /// midnight exists, otherwise the first instant of the first hour that
+    /// exists (issue #15). Zones whose spring-forward transition skips
+    /// local midnight (`Calendar.date(from:)` with hour 0 resolves to nil
+    /// on such days) previously degraded `dayStreak` to unknown for a full
+    /// day per year; nudging the anchor hour forward keeps the day anchor
+    /// (and day-stepping) exact without inventing a nonexistent instant.
+    ///
+    /// Contract (issue #2): returns `nil` only when the whole day is
+    /// missing from the calendar (or it does not exist at all) — never a
+    /// guessed instant outside the target day. Each candidate is verified
+    /// to re-extract to the requested year/month/day, so a permissive
+    /// Foundation that resolves skipped midnight into an adjacent day is
+    /// rejected rather than trusted.
+    static func dayAnchor(for day: DateComponents, calendar: Calendar) -> Date? {
+        var shifted = day
+        shifted.minute = 0
+        shifted.second = 0
+        for hour in 0...23 {
+            shifted.hour = hour
+            guard let candidate = calendar.date(from: shifted) else { continue }
+            let extracted = calendar.dateComponents([.year, .month, .day], from: candidate)
+            if extracted.year == day.year, extracted.month == day.month, extracted.day == day.day {
+                return candidate
+            }
+        }
+        return nil
     }
 
     /// Minutes practiced in the calendar week (per `calendar`'s week
